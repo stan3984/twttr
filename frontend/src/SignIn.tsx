@@ -1,7 +1,6 @@
 import { useState, type SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router";
-import { useSignIn } from "./queries/signInMutation";
-import { describeAuthError } from "./queries/util";
+import { describeSignInError, useSignIn } from "./queries/signInMutation";
 
 export function SignIn() {
   const navigate = useNavigate();
@@ -39,7 +38,7 @@ export function SignIn() {
         />
         {signIn.error && (
           <p className="text-sm text-red-600">
-            {describeAuthError(signIn.error)}
+            {describeSignInError(signIn.error)}
           </p>
         )}
         <button

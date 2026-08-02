@@ -1,7 +1,6 @@
 import { useState, type SyntheticEvent } from "react";
 import { useNavigate, Link } from "react-router";
-import { useSignUp } from "./queries/signUpMutation";
-import { describeAuthError } from "./queries/util";
+import { describeSignUpError, useSignUp } from "./queries/signUpMutation";
 import {
   PASSWORD_MAX,
   PASSWORD_MIN,
@@ -50,7 +49,7 @@ export function SignUp() {
   }
 
   const error =
-    invalid ?? (signUp.error ? describeAuthError(signUp.error) : null);
+    invalid ?? (signUp.error ? describeSignUpError(signUp.error) : null);
 
   return (
     <div className="max-w-sm px-4 mx-auto mt-24">

@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TLoginRequest } from "../types";
 import { fetchIdentity, identityKey } from "./identityQuery";
-import { request } from "./util";
+import { ApiError, describeApiError, request } from "./util";
 
 export function useSignIn() {
   const queryClient = useQueryClient();
@@ -20,4 +20,12 @@ export function useSignIn() {
     },
     onSuccess: (identity) => queryClient.setQueryData(identityKey, identity),
   });
+}
+
+export function describeSignInError(error: unknown): string {
+  if (error instanceof ApiError && error.status === 401) {
+    return "Incorrect username or password.";
+  }
+
+  return describeApiError(error);
 }
