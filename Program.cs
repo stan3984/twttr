@@ -13,7 +13,7 @@ namespace twttr;
 
 public class Program
 {
-    private static readonly string STORAGE_PROVIDER = "Storage:Provider";
+    private const string STORAGE_PROVIDER = "Storage:Provider";
 
     public static async Task Main(string[] args)
     {

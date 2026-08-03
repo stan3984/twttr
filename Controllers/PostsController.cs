@@ -8,14 +8,6 @@ using twttr.Storage;
 
 namespace twttr.Controllers;
 
-public class GetPostByIdResponseDto
-{
-    public required Guid Id { get; set; }
-    public required string Content { get; set; }
-    public required Guid AuthorId { get; set; }
-    public Guid? InReplyToId { get; set; }
-}
-
 [ApiController]
 [Route("/api/posts")]
 public class PostsController(IPostStore store) : ControllerBase
