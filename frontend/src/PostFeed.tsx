@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { usePosts } from "./queries/postsQuery";
 import { useAuthors } from "./queries/userQuery";
 import { describeApiError } from "./queries/util";
@@ -38,6 +38,11 @@ interface Props {
 }
 
 function PostItem({ post, author }: Readonly<Props>) {
+  const lines = post.content.split(/\r\n|\r|\n/).length;
+  const limit = 3;
+  const isLong = lines > limit;
+  const [isExpanded, setExpanded] = useState(false);
+
   return (
     <article className="p-4 border rounded border-slate-300">
       <p className="text-sm text-slate-600">
@@ -49,7 +54,21 @@ function PostItem({ post, author }: Readonly<Props>) {
           {formatTimeAgo(new Date(post.createdAt))}
         </time>
       </p>
-      <p className="mt-2 whitespace-pre-wrap text-slate-900">{post.content}</p>
+      <p
+        className={`mt-2 whitespace-pre-wrap text-slate-900 ${isLong && !isExpanded ? "line-clamp-3" : ""}`}
+      >
+        {post.content}
+      </p>
+      {isLong && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => setExpanded((old) => !old)}
+            className="hover:bg-blue-50 rounded text-xs px-1 py-0.5 cursor-pointer"
+          >
+            {isExpanded ? "Collapse content" : "Expand content"}
+          </button>
+        </div>
+      )}
     </article>
   );
 }
