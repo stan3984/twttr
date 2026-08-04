@@ -6,6 +6,7 @@ import {
   describeUpdatePostError,
   useUpdatePost,
 } from "./queries/updatePostMutation";
+import { useDeletePost } from "./queries/deletePostMutation";
 import { useAuthors } from "./queries/userQuery";
 import { describeApiError } from "./queries/util";
 import type { TPost, TUser } from "./types";
@@ -45,10 +46,10 @@ function formatTimeAgo(date: Date) {
 interface Props {
   post: TPost;
   author?: TUser;
-  canEdit: boolean;
+  isAuthor: boolean;
 }
 
-function PostItem({ post, author, canEdit }: Readonly<Props>) {
+function PostItem({ post, author, isAuthor }: Readonly<Props>) {
   const lines = post.content.split(/\r\n|\r|\n/).length;
   const limit = 3;
   const isLong = lines > limit;
@@ -56,7 +57,8 @@ function PostItem({ post, author, canEdit }: Readonly<Props>) {
   const [isEditing, setEditing] = useState(false);
   const [draft, setDraft] = useState(post.content);
   const updatePost = useUpdatePost(post.id);
-  const hasButtons = canEdit || isLong;
+  const deletePost = useDeletePost(post.id);
+  const hasButtons = isAuthor || isLong;
 
   return (
     <article className="p-4 border rounded border-slate-300">
@@ -110,13 +112,26 @@ function PostItem({ post, author, canEdit }: Readonly<Props>) {
                   {isExpanded ? "Collapse content" : "Expand content"}
                 </button>
               )}
-              {canEdit && (
-                <button
-                  onClick={() => setEditing(true)}
-                  className="hover:bg-blue-50 rounded text-xs px-1 py-0.5 cursor-pointer"
-                >
-                  Edit
-                </button>
+              {isAuthor && (
+                <>
+                  <button
+                    onClick={() => setEditing(true)}
+                    className="hover:bg-blue-50 rounded text-xs px-1 py-0.5 cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("Do you really want to delete this post?")) {
+                        deletePost.mutate();
+                      }
+                    }}
+                    disabled={deletePost.isPending}
+                    className="hover:bg-red-50 rounded text-xs px-1 py-0.5 cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                </>
               )}
             </div>
           )}
@@ -162,13 +177,13 @@ export function PostFeed() {
   }
 
   return (
-    <div className="flex flex-col gap-4 mb-4 mt-8">
+    <div className="flex flex-col gap-4 mt-8 mb-4">
       {posts.map((post) => (
         <PostItem
           key={post.id}
           post={post}
           author={authors.get(post.authorId)}
-          canEdit={post.authorId === identity?.id}
+          isAuthor={post.authorId === identity?.id}
         />
       ))}
       {hasNextPage && (

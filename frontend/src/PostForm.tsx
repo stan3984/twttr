@@ -72,11 +72,11 @@ export function PostForm({
         {CONTENT_MAX - normalized.length} characters left
       </p>
       {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
-      <div className="flex gap-2">
+      <div className="flex justify-center gap-2">
         <button
           type="submit"
           disabled={isPending}
-          className="w-full py-2 text-white rounded bg-slate-900 disabled:opacity-50"
+          className="h-full px-4 py-2 text-white border rounded w-fit border-slate-900 bg-slate-900 disabled:opacity-50"
         >
           {isPending ? pendingLabel : submitLabel}
         </button>
@@ -85,7 +85,7 @@ export function PostForm({
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="px-4 py-2 border rounded border-slate-300 disabled:opacity-50"
+            className="h-full px-4 py-2 border rounded w-fit border-slate-300 disabled:opacity-50"
           >
             Cancel
           </button>
