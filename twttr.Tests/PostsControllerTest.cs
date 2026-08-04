@@ -491,14 +491,14 @@ public class PostsControllerTest(PostgresFixture fixture) : WebTest(fixture)
     // Update
 
     [Fact]
-    public async Task Update_by_the_author_returns_204()
+    public async Task Update_by_the_author_returns_200()
     {
         var (client, user) = await SignedInClientUser();
         var post = await SeedPost(user.Id, "before");
 
         var response = await UpdatePost(client, post.Id, "after");
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Fact]

@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react";
+import { PostForm } from "./PostForm";
+import { useIdentity } from "./queries/identityQuery";
 import { usePosts } from "./queries/postsQuery";
+import {
+  describeUpdatePostError,
+  useUpdatePost,
+} from "./queries/updatePostMutation";
 import { useAuthors } from "./queries/userQuery";
 import { describeApiError } from "./queries/util";
 import type { TPost, TUser } from "./types";
@@ -22,6 +28,10 @@ function formatTimeAgo(date: Date) {
 
   for (const [unit, span, decimals] of DIVISIONS) {
     if (Math.abs(delta) < span) {
+      if (unit === "second") {
+        return "a few seconds ago";
+      }
+
       const factor = Math.pow(10, decimals);
       return RELATIVE.format(Math.round(delta * factor) / factor, unit);
     }
@@ -35,13 +45,18 @@ function formatTimeAgo(date: Date) {
 interface Props {
   post: TPost;
   author?: TUser;
+  canEdit: boolean;
 }
 
-function PostItem({ post, author }: Readonly<Props>) {
+function PostItem({ post, author, canEdit }: Readonly<Props>) {
   const lines = post.content.split(/\r\n|\r|\n/).length;
   const limit = 3;
   const isLong = lines > limit;
   const [isExpanded, setExpanded] = useState(false);
+  const [isEditing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(post.content);
+  const updatePost = useUpdatePost(post.id);
+  const hasButtons = canEdit || isLong;
 
   return (
     <article className="p-4 border rounded border-slate-300">
@@ -53,27 +68,66 @@ function PostItem({ post, author }: Readonly<Props>) {
         <time dateTime={post.createdAt}>
           {formatTimeAgo(new Date(post.createdAt))}
         </time>
+        {post.updatedAt &&
+          ` (edited ${formatTimeAgo(new Date(post.updatedAt))})`}
       </p>
-      <p
-        className={`mt-2 whitespace-pre-wrap text-slate-900 ${isLong && !isExpanded ? "line-clamp-3" : ""}`}
-      >
-        {post.content}
-      </p>
-      {isLong && (
-        <div className="flex justify-center">
-          <button
-            onClick={() => setExpanded((old) => !old)}
-            className="hover:bg-blue-50 rounded text-xs px-1 py-0.5 cursor-pointer"
-          >
-            {isExpanded ? "Collapse content" : "Expand content"}
-          </button>
+      {isEditing ? (
+        <div className="mt-2">
+          <PostForm
+            content={draft}
+            onContentChange={setDraft}
+            onSubmit={(normalized) =>
+              updatePost.mutate(
+                { content: normalized },
+                { onSuccess: () => setEditing(false) },
+              )
+            }
+            isPending={updatePost.isPending}
+            submitLabel="Save"
+            pendingLabel="Saving..."
+            error={
+              updatePost.error
+                ? describeUpdatePostError(updatePost.error)
+                : null
+            }
+            onCancel={() => setEditing(false)}
+          />
         </div>
+      ) : (
+        <>
+          <p
+            className={`mt-2 whitespace-pre-wrap text-slate-900 ${isLong && !isExpanded ? "line-clamp-3" : ""}`}
+          >
+            {post.content}
+          </p>
+          {hasButtons && (
+            <div className="flex gap-2 mt-2">
+              {isLong && (
+                <button
+                  onClick={() => setExpanded((old) => !old)}
+                  className="hover:bg-blue-50 rounded text-xs px-1 py-0.5 cursor-pointer"
+                >
+                  {isExpanded ? "Collapse content" : "Expand content"}
+                </button>
+              )}
+              {canEdit && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="hover:bg-blue-50 rounded text-xs px-1 py-0.5 cursor-pointer"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
     </article>
   );
 }
 
 export function PostFeed() {
+  const { data: identity } = useIdentity();
   const {
     data,
     error,
@@ -114,6 +168,7 @@ export function PostFeed() {
           key={post.id}
           post={post}
           author={authors.get(post.authorId)}
+          canEdit={post.authorId === identity?.id}
         />
       ))}
       {hasNextPage && (

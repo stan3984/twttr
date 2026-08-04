@@ -124,21 +124,32 @@ public class PostsController(IPostStore store) : ControllerBase
             return Forbid();
         }
 
+        request.Content = NormalizeContent(request.Content);
         if (!IsValidContent(request.Content))
         {
             return BadRequest();
         }
 
-        var success = await store.UpdatePost(new UpdatePost
+        if (request.Content.CompareTo(post.Content, StringComparison.Ordinal) == 0)
+        {
+            // prevent update if the content is identical
+            return Ok(PostResponseDto.From(post));
+        }
+
+        if (!await store.UpdatePost(new UpdatePost
         {
             Id = postId,
             AuthorId = (Guid)userId,
             Content = request.Content
-        }, ct);
+        }, ct))
+        {
+            return NotFound();
+        }
 
-        return success
-            ? NoContent()
-            : NotFound();
+        post = await store.GetById(postId, ct);
+        return post == null
+            ? NotFound()
+            : Ok(PostResponseDto.From(post));
     }
 
     [HttpDelete("{postId:guid}")]

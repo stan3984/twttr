@@ -36,6 +36,10 @@ export interface TCreatePostRequest {
   inReplyToId?: string;
 }
 
+export interface TUpdatePostRequest {
+  content: string;
+}
+
 export interface TUser {
   id: string;
   username: string;

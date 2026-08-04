@@ -14,7 +14,7 @@ public class PostgresPostStore(AppDbContext db) : IPostStore
             .ToListAsync(ct);
 
     public Task<Post?> GetById(Guid id, CancellationToken ct = default)
-        => db.Posts.FirstOrDefaultAsync(p => p.Id == id, ct);
+        => db.Posts.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, ct);
 
     public Task<IReadOnlyList<Post>> GetPage(int skip, int take, CancellationToken ct = default)
         => Pageify(db.Posts.OrderByDescending(p => p.CreatedAt).ThenBy(p => p.Id), skip, take, ct);
