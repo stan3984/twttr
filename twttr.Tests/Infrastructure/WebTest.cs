@@ -1,7 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using twttr.Infrastructure;
 
 namespace twttr.Tests.Infrastructure;
 
@@ -12,8 +13,6 @@ public abstract class WebTest(PostgresFixture fixture) : PostgresTest(fixture)
     public const string API_AUTH_ME = "/api/auth/me";
     public const string API_AUTH_REGISTER = "/api/auth/register";
     public const string API_POSTS = "/api/posts";
-
-    protected static readonly PasswordHasher<User> Hasher = new();
 
     protected const string ValidUsername = "sherlockholmes";
     protected const string ValidPassword = "JBfyct38vf61hdk8rg7d";
@@ -26,6 +25,9 @@ public abstract class WebTest(PostgresFixture fixture) : PostgresTest(fixture)
         _clients.ForEach(c => c.Dispose());
         await base.DisposeAsync();
     }
+
+    protected IPasswordService PasswordService
+        => Fixture.App.Services.GetRequiredService<IPasswordService>();
 
     protected HttpClient HttpClient(bool handleCookies = true)
     {
@@ -54,7 +56,7 @@ public abstract class WebTest(PostgresFixture fixture) : PostgresTest(fixture)
             Username = username,
             DisplayName = username,
             Email = $"{username}@example.com",
-            PasswordHash = passwordHash ?? Hasher.HashPassword(null!, password),
+            PasswordHash = passwordHash ?? PasswordService.Hash(password),
             CreatedAt = DateTimeOffset.UtcNow,
         };
 

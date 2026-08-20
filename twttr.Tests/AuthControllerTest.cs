@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using twttr.Tests.Infrastructure;
 
 namespace twttr.Tests;
@@ -57,7 +56,7 @@ public class AuthControllerTest(PostgresFixture fixture) : WebTest(fixture)
         Assert.NotEqual(ValidPassword, user.PasswordHash);
         Assert.Equal(
             PasswordVerificationResult.Success,
-            Hasher.VerifyHashedPassword(null!, user.PasswordHash, ValidPassword));
+            PasswordService.Verify(user.PasswordHash, ValidPassword));
     }
 
     [Fact]

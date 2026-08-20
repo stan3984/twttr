@@ -17,7 +17,7 @@ namespace twttr.Controllers;
 [Route("/api/auth")]
 public partial class AuthController(
     IUserStore store,
-    IPasswordHasher<User> hasher,
+    IPasswordService passwordService,
     ILogger<AuthController> logger
 ) : ControllerBase
 {
@@ -36,11 +36,6 @@ public partial class AuthController(
     const int UsernameMaxLength = 24;
     const int PasswordMinLength = 12;
     const int PasswordMaxLength = 64;
-
-    private static readonly Lazy<string> DummyHash = new(
-        () => new PasswordHasher<User>().HashPassword(null!, "this is not a real password"),
-        LazyThreadSafetyMode.ExecutionAndPublication
-    );
 
     private static bool IsValidPassword(string password)
     {
@@ -100,7 +95,7 @@ public partial class AuthController(
         {
             Username = username,
             Email = email,
-            PasswordHash = hasher.HashPassword(null!, password),
+            PasswordHash = passwordService.Hash(password),
         }, ct);
 
         if (newUser is null)
@@ -125,26 +120,23 @@ public partial class AuthController(
 
         var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
         var user = await store.GetByUsername(username, ct);
-        if (user is null)
+
+        // If `user` is null, then a dummy hash will be processed.
+        var result = passwordService.Verify(user?.PasswordHash, password);
+        if (user == null || result == PasswordVerificationResult.Failed)
         {
-            // Prevent timing attacks by processing a hash even if there is no user.
-            hasher.VerifyHashedPassword(null!, DummyHash.Value, password);
             LogFailedLogin(username, clientIp);
             return Unauthorized();
         }
 
-        var result = hasher.VerifyHashedPassword(null!, user.PasswordHash, password);
         switch (result)
         {
-            case PasswordVerificationResult.Failed:
-                LogFailedLogin(username, clientIp);
-                return Unauthorized();
             case PasswordVerificationResult.Success:
                 await SignIn(HttpContext, user);
                 LogSignedIn(username);
                 return NoContent();
             case PasswordVerificationResult.SuccessRehashNeeded:
-                await store.UpdateOne(new UpdateUser { Id = user.Id, PasswordHash = hasher.HashPassword(null!, password) }, ct);
+                await store.UpdateOne(new UpdateUser { Id = user.Id, PasswordHash = passwordService.Hash(password) }, ct);
                 LogRehash(username);
                 await SignIn(HttpContext, user);
                 LogSignedIn(username);

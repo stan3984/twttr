@@ -43,6 +43,7 @@ public class Program
         builder.Services.AddRateLimiter(options => RateLimitPolicies.Configure(options, rateLimits));
 
         builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+        builder.Services.AddSingleton<IPasswordService, PasswordService>();
         builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie(options =>
             {
