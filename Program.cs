@@ -79,6 +79,16 @@ public class Program
 
         if (app.Environment.IsDevelopment())
         {
+            await using (var scope = app.Services.CreateAsyncScope())
+            {
+                // set up tables and run migrations
+                await scope
+                    .ServiceProvider
+                    .GetRequiredService<AppDbContext>()
+                    .Database
+                    .MigrateAsync();
+            }
+
             app.MapOpenApi().AllowAnonymous().DisableRateLimiting();
         }
 
