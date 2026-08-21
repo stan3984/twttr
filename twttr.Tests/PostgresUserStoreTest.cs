@@ -26,11 +26,11 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task AddOne_persists_and_returns_the_user()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
+        var created = await UserStore.AddOne(NewUserData("alice"));
 
         Assert.NotNull(created);
 
-        var found = await Store.GetById(created.Id);
+        var found = await UserStore.GetById(created.Id);
 
         Assert.NotNull(found);
         Assert.Equal(created.Id, found.Id);
@@ -42,7 +42,7 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task AddOne_assigns_a_version_7_id()
     {
-        var created = await Store.AddOne(NewUserData());
+        var created = await UserStore.AddOne(NewUserData());
 
         Assert.NotNull(created);
         Assert.Equal(7, created.Id.Version);
@@ -51,10 +51,10 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task AddOne_defaults_DisplayName_to_Username()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
+        var created = await UserStore.AddOne(NewUserData("alice"));
         Assert.NotNull(created);
 
-        var found = await Store.GetById(created.Id);
+        var found = await UserStore.GetById(created.Id);
         Assert.NotNull(found);
         Assert.Equal("alice", found.DisplayName);
     }
@@ -63,12 +63,12 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     public async Task AddOne_sets_CreatedAt_to_utc_now()
     {
         var before = DateTimeOffset.UtcNow;
-        var created = await Store.AddOne(NewUserData());
+        var created = await UserStore.AddOne(NewUserData());
         var after = DateTimeOffset.UtcNow;
 
         Assert.NotNull(created);
 
-        var found = await Store.GetById(created.Id);
+        var found = await UserStore.GetById(created.Id);
 
         Assert.NotNull(found);
         Assert.InRange(found.CreatedAt, before, after);
@@ -78,7 +78,7 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task AddOne_duplicate_username_returns_null()
     {
-        Assert.NotNull(await Store.AddOne(NewUserData("alice")));
+        Assert.NotNull(await UserStore.AddOne(NewUserData("alice")));
 
         var duplicate = new NewUser
         {
@@ -87,13 +87,13 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
             PasswordHash = "not-a-real-hash",
         };
 
-        Assert.Null(await Store.AddOne(duplicate));
+        Assert.Null(await UserStore.AddOne(duplicate));
     }
 
     [Fact]
     public async Task AddOne_duplicate_email_returns_null()
     {
-        Assert.NotNull(await Store.AddOne(NewUserData("alice")));
+        Assert.NotNull(await UserStore.AddOne(NewUserData("alice")));
 
         var duplicate = new NewUser
         {
@@ -102,16 +102,16 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
             PasswordHash = "not-a-real-hash",
         };
 
-        Assert.Null(await Store.AddOne(duplicate));
+        Assert.Null(await UserStore.AddOne(duplicate));
     }
 
     [Fact]
     public async Task AddOne_duplicate_does_not_persist()
     {
-        await Store.AddOne(NewUserData("alice"));
-        await Store.AddOne(NewUserData("alice"));
+        await UserStore.AddOne(NewUserData("alice"));
+        await UserStore.AddOne(NewUserData("alice"));
 
-        var all = await Store.GetPage(0, 100);
+        var all = await UserStore.GetPage(0, 100);
 
         Assert.Single(all);
     }
@@ -119,15 +119,15 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task GetById_returns_null_when_absent()
     {
-        Assert.Null(await Store.GetById(Guid.CreateVersion7()));
+        Assert.Null(await UserStore.GetById(Guid.CreateVersion7()));
     }
 
     [Fact]
     public async Task GetByUsername_returns_the_user()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
+        var created = await UserStore.AddOne(NewUserData("alice"));
 
-        var found = await Store.GetByUsername("alice");
+        var found = await UserStore.GetByUsername("alice");
 
         Assert.NotNull(found);
         Assert.Equal(created!.Id, found.Id);
@@ -136,24 +136,24 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task GetByUsername_returns_null_when_absent()
     {
-        Assert.Null(await Store.GetByUsername("nobody"));
+        Assert.Null(await UserStore.GetByUsername("nobody"));
     }
 
     [Fact]
     public async Task GetByUsername_is_case_sensitive()
     {
-        await Store.AddOne(NewUserData("alice"));
+        await UserStore.AddOne(NewUserData("alice"));
 
         // Postgres '=' on varchar is case-sensitive.
-        Assert.Null(await Store.GetByUsername("ALICE"));
+        Assert.Null(await UserStore.GetByUsername("ALICE"));
     }
 
     [Fact]
     public async Task GetByEmail_returns_the_user()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
+        var created = await UserStore.AddOne(NewUserData("alice"));
 
-        var found = await Store.GetByEmail("alice@example.com");
+        var found = await UserStore.GetByEmail("alice@example.com");
 
         Assert.NotNull(found);
         Assert.Equal(created!.Id, found.Id);
@@ -162,25 +162,25 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task GetByEmail_returns_null_when_absent()
     {
-        Assert.Null(await Store.GetByEmail("nobody@example.com"));
+        Assert.Null(await UserStore.GetByEmail("nobody@example.com"));
     }
 
     [Fact]
     public async Task UsernameExists_reflects_stored_users()
     {
-        await Store.AddOne(NewUserData("alice"));
+        await UserStore.AddOne(NewUserData("alice"));
 
-        Assert.True(await Store.UsernameExists("alice"));
-        Assert.False(await Store.UsernameExists("bob"));
+        Assert.True(await UserStore.UsernameExists("alice"));
+        Assert.False(await UserStore.UsernameExists("bob"));
     }
 
     [Fact]
     public async Task EmailExists_reflects_stored_users()
     {
-        await Store.AddOne(NewUserData("alice"));
+        await UserStore.AddOne(NewUserData("alice"));
 
-        Assert.True(await Store.EmailExists("alice@example.com"));
-        Assert.False(await Store.EmailExists("bob@example.com"));
+        Assert.True(await UserStore.EmailExists("alice@example.com"));
+        Assert.False(await UserStore.EmailExists("bob@example.com"));
     }
 
     [Fact]
@@ -193,7 +193,7 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
             UserAt(t.AddHours(2), "newest"),
             UserAt(t.AddHours(1), "middle"));
 
-        var page = await Store.GetPage(0, 10);
+        var page = await UserStore.GetPage(0, 10);
 
         Assert.Equal(["newest", "middle", "oldest"], page.Select(u => u.Username));
     }
@@ -211,7 +211,7 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
             UserAt(t, "high", high),
             UserAt(t, "low", low));
 
-        var page = await Store.GetPage(0, 10);
+        var page = await UserStore.GetPage(0, 10);
 
         Assert.Equal(["low", "high"], page.Select(u => u.Username));
     }
@@ -223,9 +223,9 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
 
         await SeedUser([.. Enumerable.Range(0, 5).Select(i => UserAt(t.AddHours(i), $"user{i}"))]);
 
-        var first = await Store.GetPage(0, 2);
-        var second = await Store.GetPage(2, 2);
-        var third = await Store.GetPage(4, 2);
+        var first = await UserStore.GetPage(0, 2);
+        var second = await UserStore.GetPage(2, 2);
+        var third = await UserStore.GetPage(4, 2);
 
         Assert.Equal(2, first.Count);
         Assert.Equal(2, second.Count);
@@ -244,7 +244,7 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
 
         await SeedUser([.. Enumerable.Range(0, 110).Select(i => UserAt(t.AddMinutes(i), $"user{i}"))]);
 
-        var page = await Store.GetPage(0, 500);
+        var page = await UserStore.GetPage(0, 500);
 
         Assert.Equal(100, page.Count);
     }
@@ -252,24 +252,24 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task GetPage_with_take_zero_returns_empty()
     {
-        await Store.AddOne(NewUserData("alice"));
-        Assert.Empty(await Store.GetPage(0, 0));
+        await UserStore.AddOne(NewUserData("alice"));
+        Assert.Empty(await UserStore.GetPage(0, 0));
     }
 
     [Fact]
     public async Task UpdateOne_updates_only_supplied_fields()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
+        var created = await UserStore.AddOne(NewUserData("alice"));
         Assert.NotNull(created);
 
-        var updated = await Store.UpdateOne(new UpdateUser
+        var updated = await UserStore.UpdateOne(new UpdateUser
         {
             Id = created!.Id,
             DisplayName = "Alice A.",
         });
         Assert.True(updated);
 
-        var found = await Store.GetById(created.Id);
+        var found = await UserStore.GetById(created.Id);
         Assert.NotNull(found);
         Assert.Equal("Alice A.", found.DisplayName);
         Assert.Equal(created.Email, found.Email);
@@ -279,12 +279,12 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task UpdateOne_with_no_fields_set_returns_true()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
-        var updated = await Store.UpdateOne(new UpdateUser { Id = created!.Id });
+        var created = await UserStore.AddOne(NewUserData("alice"));
+        var updated = await UserStore.UpdateOne(new UpdateUser { Id = created!.Id });
 
         Assert.True(updated);
 
-        var found = await Store.GetById(created.Id);
+        var found = await UserStore.GetById(created.Id);
 
         Assert.NotNull(found);
         Assert.Equal(created.DisplayName, found.DisplayName);
@@ -294,7 +294,7 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task UpdateOne_returns_false_for_unknown_id()
     {
-        var updated = await Store.UpdateOne(new UpdateUser
+        var updated = await UserStore.UpdateOne(new UpdateUser
         {
             Id = Guid.CreateVersion7(),
             DisplayName = "Nobody",
@@ -306,13 +306,13 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task UpdateOne_returns_false_on_duplicate_email()
     {
-        var alice = await Store.AddOne(NewUserData("alice"));
-        var bob = await Store.AddOne(NewUserData("bob"));
+        var alice = await UserStore.AddOne(NewUserData("alice"));
+        var bob = await UserStore.AddOne(NewUserData("bob"));
 
         Assert.NotNull(alice);
         Assert.NotNull(bob);
 
-        var updated = await Store.UpdateOne(new UpdateUser
+        var updated = await UserStore.UpdateOne(new UpdateUser
         {
             Id = alice.Id,
             Email = bob.Email,
@@ -324,15 +324,15 @@ public class PostgresUserStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
     [Fact]
     public async Task DeleteOne_removes_the_user_and_returns_true()
     {
-        var created = await Store.AddOne(NewUserData("alice"));
+        var created = await UserStore.AddOne(NewUserData("alice"));
 
-        Assert.True(await Store.DeleteOne(created!.Id));
-        Assert.Null(await Store.GetById(created.Id));
+        Assert.True(await UserStore.DeleteOne(created!.Id));
+        Assert.Null(await UserStore.GetById(created.Id));
     }
 
     [Fact]
     public async Task DeleteOne_returns_false_for_unknown_id()
     {
-        Assert.False(await Store.DeleteOne(Guid.CreateVersion7()));
+        Assert.False(await UserStore.DeleteOne(Guid.CreateVersion7()));
     }
 }

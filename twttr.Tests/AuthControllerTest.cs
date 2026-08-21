@@ -28,7 +28,7 @@ public class AuthControllerTest(PostgresFixture fixture) : WebTest(fixture)
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
-        var user = await Store.GetByUsername(ValidUsername);
+        var user = await UserStore.GetByUsername(ValidUsername);
         Assert.NotNull(user);
         Assert.Equal(ValidEmail, user.Email);
         Assert.Equal(ValidUsername, user.DisplayName);
@@ -51,7 +51,7 @@ public class AuthControllerTest(PostgresFixture fixture) : WebTest(fixture)
     {
         await Register(HttpClient());
 
-        var user = await Store.GetByUsername(ValidUsername);
+        var user = await UserStore.GetByUsername(ValidUsername);
         Assert.NotNull(user);
         Assert.NotEqual(ValidPassword, user.PasswordHash);
         Assert.Equal(
@@ -147,7 +147,7 @@ public class AuthControllerTest(PostgresFixture fixture) : WebTest(fixture)
     {
         await Register(HttpClient(), username: "bad");
 
-        Assert.Empty(await Store.GetPage(0, 100));
+        Assert.Empty(await UserStore.GetPage(0, 100));
     }
 
     // Login
@@ -293,7 +293,7 @@ public class AuthControllerTest(PostgresFixture fixture) : WebTest(fixture)
         var client = HttpClient();
         await Login(client);
 
-        Assert.True(await Store.DeleteOne(user.Id));
+        Assert.True(await UserStore.DeleteOne(user.Id));
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync(API_AUTH_ME)).StatusCode);
     }

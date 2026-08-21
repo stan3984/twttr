@@ -501,7 +501,7 @@ public class PostgresPostStoreTest(PostgresFixture fixture) : PostgresTest(fixtu
         var created = await PostStore.AddOne(NewPostData(author.Id));
 
         Assert.NotNull(created);
-        Assert.True(await Store.DeleteOne(author.Id));
+        Assert.True(await UserStore.DeleteOne(author.Id));
         Assert.Null(await PostStore.GetById(created.Id));
     }
 }

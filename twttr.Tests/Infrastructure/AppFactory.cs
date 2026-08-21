@@ -3,15 +3,15 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace twttr.Tests.Infrastructure;
 
-public class AppFactory(string connectionString) : WebApplicationFactory<Program>
+public class AppFactory(string connectionString, params (string, string)[] settings) : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseSetting("ConnectionStrings:twttr", connectionString)
-               // todo: add tests for rate limit filters
-               .UseSetting("RateLimiting:Login:Permits", "1000000")
-               .UseSetting("RateLimiting:Register:Permits", "1000000")
-               .UseSetting("RateLimiting:Post:Permits", "1000000")
-               .UseSetting("RateLimiting:Global:Permits", "1000000");
+        builder.UseSetting("ConnectionStrings:twttr", connectionString);
+
+        foreach (var (key, value) in settings)
+        {
+            builder.UseSetting(key, value);
+        }
     }
 }

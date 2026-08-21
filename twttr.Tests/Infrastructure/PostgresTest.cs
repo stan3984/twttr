@@ -10,7 +10,7 @@ public abstract class PostgresTest(PostgresFixture fixture) : IAsyncLifetime
     public async Task InitializeAsync()
     {
         await using var db = Fixture.CreateContext();
-        await db.Database.ExecuteSqlRawAsync("""TRUNCATE "Posts", "Users" RESTART IDENTITY CASCADE""");
+        await db.Database.ExecuteSqlRawAsync("""TRUNCATE "Posts", "Users";""");
     }
 
     public virtual async Task DisposeAsync()
@@ -18,7 +18,7 @@ public abstract class PostgresTest(PostgresFixture fixture) : IAsyncLifetime
 
     protected PostgresFixture Fixture { get; } = fixture;
 
-    protected PostgresUserStore Store
+    protected PostgresUserStore UserStore
     {
         get
         {
