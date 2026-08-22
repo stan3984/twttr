@@ -14,7 +14,14 @@ public abstract class PostgresTest(PostgresFixture fixture) : IAsyncLifetime
     }
 
     public virtual async Task DisposeAsync()
-        => _contexts.ForEach(async ctx => await ctx.DisposeAsync());
+    {
+        foreach (var ctx in _contexts)
+        {
+            await ctx.DisposeAsync();
+        }
+
+        _contexts.Clear();
+    }
 
     protected PostgresFixture Fixture { get; } = fixture;
 
