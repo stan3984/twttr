@@ -18,23 +18,44 @@ public abstract class WebTest(PostgresFixture fixture) : PostgresTest(fixture)
     protected const string ValidPassword = "JBfyct38vf61hdk8rg7d";
     protected const string ValidEmail = "sherlock@example.com";
 
+    private WebApplicationFactory<Program>? _app;
+
     private readonly List<HttpClient> _clients = [];
 
     public override async Task DisposeAsync()
     {
         _clients.ForEach(c => c.Dispose());
+        if (_app is not null && !ReferenceEquals(_app, Fixture.App))
+        {
+            await _app.DisposeAsync();
+        }
         await base.DisposeAsync();
     }
 
+    protected WebApplicationFactory<Program> App
+        => _app ??= (
+            // Use the shared `Fixture.App` unless custom `AppSettings` are specified.
+            // This reduces set-up and tear-down cost and makes testing slightly faster.
+            AppSettings.Length > 0
+                ? Fixture.App.WithWebHostBuilder(builder =>
+                    {
+                        foreach (var (k, v) in AppSettings)
+                        {
+                            builder.UseSetting(k, v);
+                        }
+                    })
+                : Fixture.App
+        );
+
+    protected virtual (string, string)[] AppSettings => [];
+
     protected IPasswordService PasswordService
-        => Fixture.App.Services.GetRequiredService<IPasswordService>();
+        => App.Services.GetRequiredService<IPasswordService>();
 
     protected HttpClient HttpClient(bool handleCookies = true)
     {
-        var client = Fixture.App.CreateClient(new WebApplicationFactoryClientOptions
+        var client = App.CreateClient(new WebApplicationFactoryClientOptions
         {
-            // the session cookie is configured CookieSecurePolicy.Always and HttpClient refuses
-            // to send a secure cookie over http, so this has to be https.
             BaseAddress = new Uri("https://localhost"),
             HandleCookies = handleCookies,
         });

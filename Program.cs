@@ -36,7 +36,6 @@ public class Program
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-        // todo: add tests for rate limit filters
         var rateLimits = builder.Configuration
             .GetSection(RateLimitingOptions.Section)
             .Get<RateLimitingOptions>() ?? new RateLimitingOptions();
